@@ -1,0 +1,20 @@
+namespace: /ipfs
+
+ipfs:
+  defines: runnable
+  containers:
+    defines: containers
+    ipfs:
+      image: ipfs/go-ipfs:latest
+      ports:
+        - <- `${ipfs-swarm-port}:4001`
+        - <- `${ipfs-gateway-port}:8080`
+      paths:
+        - <- `${monk-volume-path}/ipfs/export:/export`
+        - <- `${monk-volume-path}/ipfs/data:/data/ipfs`
+  variables:
+    defines: variables
+    ipfs-swarm-port:
+      value: 4001
+    ipfs-gateway-port:
+      value: 8080
