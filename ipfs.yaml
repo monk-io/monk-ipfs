@@ -1,20 +1,31 @@
-namespace: /ipfs
+namespace: ipfs
 
-ipfs:
+base:
   defines: runnable
+  metadata:
+    name: IPFS
+    website: https://ipfs.tech/
+    description: "A peer-to-peer hypermedia protocol designed to preserve and grow humanity's knowledge by making the web upgradeable, resilient, and more open."
+    publisher: monk.io
+    icon: https://upload.wikimedia.org/wikipedia/commons/1/18/Ipfs-logo-1024-ice-text.png
+    source: https://github.com/ipfs/kubo
   containers:
-    defines: containers
     ipfs:
-      image: ipfs/go-ipfs:latest
-      ports:
-        - <- `${ipfs-swarm-port}:4001`
-        - <- `${ipfs-gateway-port}:8080`
+      image: ipfs/kubo:latest
       paths:
         - <- `${monk-volume-path}/ipfs/export:/export`
         - <- `${monk-volume-path}/ipfs/data:/data/ipfs`
-  variables:
-    defines: variables
-    ipfs-swarm-port:
-      value: 4001
-    ipfs-gateway-port:
-      value: 8080
+  services:
+    swarm:
+      container: ipfs
+      port: 4001
+      host-port: 4001
+    gateway:
+      container: ipfs
+      port: 8080
+      host-port: 8080
+      protocol: tcp
+    api:
+      container: ipfs
+      port: 5001
+      protocol: tcp
