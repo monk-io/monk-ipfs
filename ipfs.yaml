@@ -37,6 +37,6 @@ base:
       protocol: tcp
     websockets:
       container: ipfs
-      port: 8080
-      host-port: 8080
+      port: 8081
+      host-port: 8081
       protocol: tcp
