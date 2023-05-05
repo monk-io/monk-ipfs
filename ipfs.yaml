@@ -16,16 +16,27 @@ base:
         - <- `${monk-volume-path}/ipfs/export:/export`
         - <- `${monk-volume-path}/ipfs/data:/data/ipfs`
   services:
-    swarm:
+    swarm-tcp:
       container: ipfs
       port: 4001
       host-port: 4001
+      protocol: tcp
+    swarm-udp:
+      container: ipfs
+      port: 4001
+      host-port: 4001
+      protocol: udp
+    api:
+      container: ipfs
+      port: 5001
+      protocol: tcp
     gateway:
       container: ipfs
       port: 8080
       host-port: 8080
       protocol: tcp
-    api:
+    websockets:
       container: ipfs
-      port: 5001
+      port: 8081
+      host-port: 8081
       protocol: tcp
