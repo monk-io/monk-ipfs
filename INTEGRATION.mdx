@@ -1,0 +1,254 @@
+---
+title: IPFS (InterPlanetary File System)
+description: Ready-to-run IPFS container template for decentralized peer-to-peer file storage and sharing.
+primary_category: storage
+tags: [ipfs, distributed-storage, p2p, decentralized, template, runnable, web3, file-sharing]
+integration_type: template
+hosting_models: [self-hosted]
+website_url: https://ipfs.tech/
+docs_url: https://docs.ipfs.tech/
+publisher: monk.io
+---
+
+## Overview
+
+This template provides a production‑ready IPFS node as a Monk runnable. You can:
+
+- Run it directly to join the IPFS network and store/retrieve files
+- Inherit it in your own Web3 infrastructure for decentralized file storage
+
+IPFS (InterPlanetary File System) is a peer-to-peer hypermedia protocol designed to make the web faster, safer, and more open. It's a distributed file system that uses content-addressing to uniquely identify files in a global namespace.
+
+## What this template manages
+
+- IPFS daemon (go-ipfs or Kubo)
+- HTTP Gateway for web access
+- API server
+- Peer-to-peer networking
+- Content-addressed storage
+- API on port 5001, Gateway on port 8080
+
+## Quick start (run directly)
+
+1) Load templates
+
+```bash
+monk load MANIFEST
+```
+
+2) Run IPFS node
+
+```bash
+monk run ipfs/ipfs
+```
+
+Once started:
+- API: `http://localhost:5001`
+- Gateway: `http://localhost:8080`
+- WebUI: `http://localhost:5001/webui`
+
+3) Customize configuration
+
+Running directly uses the defaults defined in this template's `variables`. To customize:
+
+- Preferred: inherit and override variables as shown in the inheritance section below.
+- Alternative: fork/clone and edit the variables in `ipfs.yaml`, then `monk load MANIFEST` and run.
+
+## Configuration
+
+Key variables you can customize in this template:
+
+```yaml
+variables:
+  # IPFS
+  ipfs-image-tag: "latest"            # container image tag
+  api-port: "5001"                    # API port (env: IPFS_API_PORT)
+  gateway-port: "8080"                # HTTP gateway port (env: IPFS_GATEWAY_PORT)
+  swarm-port: "4001"                  # P2P swarm port (env: IPFS_SWARM_PORT)
+  
+  # Storage
+  repo-size-limit: "10GB"             # repository size limit
+  storage-max: "10GB"                 # max storage
+  
+  # Networking
+  enable-pubsub: "true"               # enable pub/sub messaging
+  enable-mplex: "true"                # enable stream multiplexing
+```
+
+Data is persisted under `${monk-volume-path}/ipfs` on the host.
+
+## Use by inheritance (recommended for Web3)
+
+Inherit the IPFS runnable in your application and declare a connection. Example:
+
+```yaml
+namespace: myweb3
+storage:
+  defines: runnable
+  inherits: ipfs/ipfs
+  variables:
+    repo-size-limit: "50GB"
+    enable-pubsub: "true"
+dapp:
+  defines: runnable
+  containers:
+    app:
+      image: myorg/dapp
+  connections:
+    ipfs:
+      runnable: storage
+      service: ipfs
+  variables:
+    ipfs-api-url:
+      value: <- concat("http://", connection-hostname("ipfs"), ":5001")
+    ipfs-gateway-url:
+      value: <- concat("http://", connection-hostname("ipfs"), ":8080")
+```
+
+Run the stack:
+
+```bash
+monk run myweb3/dapp
+```
+
+## Ports and connectivity
+
+- Service: `ipfs` on TCP port `5001` (API) and `8080` (Gateway)
+- P2P: TCP/UDP port `4001` (Swarm)
+- WebUI: `http://localhost:5001/webui`
+- From other runnables in the same process group, use `connection-hostname("<connection-name>")` to resolve the IPFS host.
+
+## Persistence and configuration
+
+- Data path: `${monk-volume-path}/ipfs:/data/ipfs`
+- All pinned content and configuration are persisted to the host volume.
+
+## Features
+
+- **Content-Addressed Storage**: Files identified by cryptographic hashes (CIDs)
+- **Decentralized**: No central server, peer-to-peer network
+- **Permanent**: Content stays available as long as someone hosts it
+- **Versioning**: Built-in versioning with IPLD
+- **HTTP Gateway**: Access IPFS content via HTTP
+- **Pinning**: Keep content available permanently
+- **Pub/Sub**: Real-time messaging between nodes
+- **IPNS**: Mutable pointers to IPFS content
+
+## Adding Files to IPFS
+
+CLI:
+
+```bash
+# Add file
+ipfs add myfile.txt
+# Returns: added QmHash... myfile.txt
+
+# Add directory
+ipfs add -r my-directory/
+
+# Pin file (keep permanently)
+ipfs pin add QmHash...
+```
+
+HTTP API:
+
+```bash
+# Add file
+curl -F file=@myfile.txt http://localhost:5001/api/v0/add
+
+# Get file
+curl http://localhost:5001/api/v0/cat?arg=QmHash...
+```
+
+## Retrieving Files
+
+```bash
+# Via CLI
+ipfs cat QmHash...
+
+# Via Gateway
+curl http://localhost:8080/ipfs/QmHash...
+
+# Or in browser
+http://localhost:8080/ipfs/QmHash...
+```
+
+## JavaScript Integration
+
+```javascript
+import { create } from 'ipfs-http-client';
+
+const ipfs = create({ url: 'http://localhost:5001' });
+
+// Add file
+const { cid } = await ipfs.add('Hello IPFS!');
+console.log('CID:', cid.toString());
+
+// Get file
+const chunks = [];
+for await (const chunk of ipfs.cat(cid)) {
+  chunks.push(chunk);
+}
+console.log(Buffer.concat(chunks).toString());
+```
+
+## IPNS (Mutable Names)
+
+Publish mutable references:
+
+```bash
+# Generate key
+ipfs key gen --type=rsa --size=2048 mykey
+
+# Publish content
+ipfs name publish --key=mykey /ipfs/QmHash...
+
+# Resolve IPNS name
+ipfs name resolve /ipns/YourPeerID
+```
+
+## Pinning Services
+
+Integrate with pinning services for reliability:
+- **Pinata**: https://pinata.cloud/
+- **Infura**: https://infura.io/
+- **Web3.Storage**: https://web3.storage/
+
+## Use cases
+
+IPFS excels at:
+- Decentralized websites and dApps
+- NFT metadata and asset storage
+- Distributed file sharing
+- Content distribution networks (CDN alternative)
+- Archival and backup
+- Censorship-resistant publishing
+- Web3 applications
+
+
+## Related templates
+
+- See other templates in this repository for complementary services.
+- Combine with monitoring tools for observability.
+
+## Troubleshooting
+
+- Access WebUI at `http://localhost:5001/webui` to monitor node status and manage content.
+- Check node status:
+
+```bash
+ipfs id
+ipfs swarm peers
+```
+
+- Check logs:
+
+```bash
+monk logs -l 500 -f ipfs/ipfs
+```
+
+- **Connectivity issues**: Verify port 4001 is accessible, check firewall rules for P2P traffic, and ensure NAT traversal is working.
+- **Slow retrievals**: Connect to more peers using the swarm commands or check network connectivity.
+- **Storage issues**: Increase `repo-size-limit` variable or clear unused data with `ipfs repo gc`.
+- **Bandwidth monitoring**: Use the WebUI to monitor bandwidth usage and connected peers.
+- Ensure the host volume is writable by the container user.
